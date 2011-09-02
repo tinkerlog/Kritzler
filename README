@@ -4,5 +4,27 @@
 
  This is a software to drive a 2D plotting device.
  
- 
- 
+ src/ 
+      Contains Processing/Java sources, ready to use in Eclipse.
+      Take a look at http://processing.org/learning/eclipse/
+      to see how to set things up.
+      
+ firmware/
+      Contains Arduino firmware for the Kritzler.
+
+ jpg_to_svg_bw.sh
+      Script to convert a bitmap into an SVG.
+      Needs imagemagick and potrace.
+    
+ jpg_to_svg.sh
+      Starts the processing sketch to make a jittered SVG
+      out of a bitmap (JPG).
+      
+ fill_svg.sh 
+      Starts the processing sketch to fill SVG outlines with
+      with diagonal lines.
+      
+ plotter.sh
+      Starts the processing sketch that sends SVGs to the Kritzler.
+      
+      
