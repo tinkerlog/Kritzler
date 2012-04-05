@@ -28,11 +28,11 @@
  * B - RED - YEL(BLK)
  * D - BLU - BLU
  *
- * Pololu - Mot(Tri) - Mot(Spa)
- *     2B - BLK      - RED
- *     2A - BRN/GRN  - GRN
- *     1A - BLU      - BLU
- *     1B - RED      - BLK 
+ * Pololu - Mot(Tri) - Mot(Spa) - Mot(Pololu/1200)
+ *     2B - BLK      - RED      - RED
+ *     2A - BRN/GRN  - GRN      - BLU
+ *     1A - BLU      - BLU      - GRN
+ *     1B - RED      - BLK      - BLK
  *
  *
  *
@@ -95,16 +95,16 @@
 #define CMD_CHAR_MOVE_R 'm'
 
 // pin defines
+#define MS1_PIN 2
+#define ENABLE_PIN 3
+#define MS3_PIN 4
 #define SERVO_PIN 5
+#define STEP_PIN_M1 6
+#define DIR_PIN_M1 7
+#define STEP_PIN_M2 8
+#define DIR_PIN_M2 9
 #define LED_PIN1 10
 #define LED_PIN2 14
-#define ENABLE_PIN 3
-#define MS1_PIN 2
-#define MS3_PIN 4
-#define STEP_PIN_M1 6
-#define STEP_PIN_M2 8
-#define DIR_PIN_M1 7
-#define DIR_PIN_M2 9
 
 #define MAX_BUFFER_SIZE 50
 
@@ -182,8 +182,8 @@ void setup() {
   servo.write(PEN_UP_POS);
   delay(500);
 
-  // 8MHz / 8 = 1MHz (prescaler 8)
-  // 1MHz / 256 = 3906 Hz
+  // 16 MHz / 8 = 2 MHz (prescaler 8)
+  // 2MHz / 256 = 7812.5 Hz
   TCCR2A = 0;           // normal operation                                                  
   TCCR2B = (1<<CS21);   // prescaler 8                                                       
   TIMSK2 = (1<<TOIE2);  // enable overflow interrupt                                         
@@ -222,7 +222,6 @@ int e2 = 0;
 
 /*
  * Timer overflow service routine
- * Called 3906Hz at 8MHz
  */
 ISR(TIMER2_OVF_vect) {
 
@@ -240,6 +239,7 @@ ISR(TIMER2_OVF_vect) {
     if (writePtr != readPtr) {
       idleCount = 0;
       digitalWrite(ENABLE_PIN, LOW);
+      digitalWrite(LED_PIN1, HIGH);
       newReadPtr = (readPtr + 1) % MAX_COMMANDS;
       // read the actual command 
       tM1 = cmdBuffer[newReadPtr].targetM1;
@@ -252,8 +252,10 @@ ISR(TIMER2_OVF_vect) {
       // set directions
       dsM1 = (tM1 > stepsM1) ? +1 : -1;
       dsM2 = (tM2 > stepsM2) ? +1 : -1;
-      digitalWrite(DIR_PIN_M1, (targetM1 > stepsM1) ? DIR_UP : DIR_DOWN);
-      digitalWrite(DIR_PIN_M2, (targetM2 > stepsM2) ? DIR_DOWN : DIR_UP);
+      digitalWrite(DIR_PIN_M1, (tM1 > stepsM1) ? DIR_UP : DIR_DOWN);
+      digitalWrite(DIR_PIN_M2, (tM2 > stepsM2) ? DIR_DOWN : DIR_UP);
+      targetM1 = tM1;
+      targetM2 = tM2;
       // go to pulsing/stepping state ...
       driverState = D_STATE_PULSE;      
       // ... but move the pen up or down before, if needed
@@ -275,9 +277,18 @@ ISR(TIMER2_OVF_vect) {
 	}
 	break;
       }
+      /*
       Serial.print("state: ");
-      Serial.print("X ");
       Serial.println(driverState, DEC);
+      Serial.print("target: ");
+      Serial.print(targetM1);
+      Serial.print(", ");
+      Serial.print(targetM2);
+      Serial.print(", delta: ");
+      Serial.print(dsM1);
+      Serial.print(", ");
+      Serial.println(dsM2);
+      */
     }
     else {
       idleCount++;
@@ -290,14 +301,13 @@ ISR(TIMER2_OVF_vect) {
     break;
   case D_STATE_WAIT_SERVO:
     if (servoDelay++ >= PEN_DELAY) {
-      Serial.println("WAIT_SERVO --> PULSE");
+      // Serial.println("WAIT_SERVO --> PULSE");
       driverState = D_STATE_PULSE;
       servoDelay = 0;
     }
     break;
   case D_STATE_PULSE:
     e2 = err * 2;
-    Serial.print("P");
     if (e2 > -dM2) {
       err = err - dM2;
       digitalWrite(STEP_PIN_M1, HIGH);
@@ -308,10 +318,16 @@ ISR(TIMER2_OVF_vect) {
       digitalWrite(STEP_PIN_M2, HIGH);
       stepsM2 += dsM2;
     }
+    /*
     Serial.print("steps: ");
     Serial.print(stepsM1);
     Serial.print(", ");
-    Serial.println(stepsM2);
+    Serial.print(stepsM2);
+    Serial.print(", ");
+    Serial.print(targetM1);
+    Serial.print(", ");
+    Serial.println(targetM2);
+    */
     pause_count = 0;
     driverState = D_STATE_PULSE_DOWN;
     break;
@@ -319,11 +335,10 @@ ISR(TIMER2_OVF_vect) {
     digitalWrite(STEP_PIN_M1, LOW);
     digitalWrite(STEP_PIN_M2, LOW);
     if ((stepsM1 == targetM1) && (stepsM2 == targetM2)) {
-      Serial.println("PULSE_DOWN --> IDLE");
+      // Serial.println("PULSE_DOWN --> IDLE");
       driverState = D_STATE_IDLE;
       // signal that we have consumed the command by advancing the read pointer
       readPtr = newReadPtr;
-      digitalWrite(LED_PIN2, LOW);
     }
     else if (pause_count < PAUSE_DELAY) {
       driverState = D_STATE_PAUSE;
@@ -411,16 +426,18 @@ byte parseLine(char *line) {
   long a, b;
   char buf[10];
 
+  digitalWrite(LED_PIN2, HIGH);
+
   // wait until there is space for this command
   do {
     newWritePtr = (writePtr+1) % MAX_COMMANDS;
-    Serial.print("write:");
-    Serial.print(newWritePtr);
-    Serial.print(", read:");
-    Serial.println(readPtr);
+    // Serial.print("write:");
+    // Serial.print(newWritePtr, DEC);
+    // Serial.print(", read:");
+    // Serial.println(readPtr, DEC);
     if (newWritePtr == readPtr) {
       delay(1000);
-      Serial.println("waiting ...");
+      Serial.println("#waiting ...");
     }
   } while (newWritePtr == readPtr);
 
@@ -430,7 +447,7 @@ byte parseLine(char *line) {
     tcmd = line[0];
     break;
   default:
-    Serial.print("unknown command: ");
+    Serial.print("#unknown command: ");
     Serial.println(line[0]);
     return 1;
   }
@@ -440,7 +457,7 @@ byte parseLine(char *line) {
   line = readToken(line, buf, ' ');
   ty = atol(buf);
 
-  Serial.print("cmd: ");
+  Serial.print("#cmd: ");
   Serial.print(tcmd);
   Serial.print(", x:" );
   Serial.print(tx);
@@ -460,6 +477,8 @@ byte parseLine(char *line) {
   // advance the write ptr
   writePtr = newWritePtr;
 
+  digitalWrite(LED_PIN2, LOW);
+  Serial.println("OK");
   return 0;
 }
 
@@ -470,7 +489,6 @@ byte readLine(char *line, byte size) {
     if (Serial.available()) {
       c = Serial.read();
       length++;
-      Serial.print(c);
       if ((c == '\r') || (c == '\n')) {
         break;
 	*line = '\0';
@@ -478,7 +496,6 @@ byte readLine(char *line, byte size) {
       *line++ = c;
     }
   }
-  Serial.println();
   return length;
 }
 
