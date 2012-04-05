@@ -81,6 +81,7 @@ public class Plotter extends PApplet {
     smooth();
     size(xsize, ysize);
     background(100);
+    println("plotter ready");
   }
   
   
@@ -130,9 +131,9 @@ public class Plotter extends PApplet {
       if (!paused) {
         plotter.checkSerial();
         if (plotter.isFinished()) {
-          plotter.setScale(1.0F);
-          plotter.translate(0, 0);
-          plotter.sendInstruction(new Instruction(Instruction.MOVE_ABS, HOME_X, HOME_Y));
+          //plotter.setScale(1.0F);
+          //plotter.translate(0, 0);
+          //plotter.sendInstruction(new Instruction(Instruction.MOVE_ABS, HOME_X, HOME_Y));
           moveShapeDone();
           state = STATE_WAITING;
         }
@@ -147,7 +148,7 @@ public class Plotter extends PApplet {
     plotter.setScale(1.0F);
     plotter.translate(START_X + dx, START_Y + dy);
     plotter.setScale(plotterScale);
-    plotter.sendInstruction(new Instruction(Instruction.MOVE_REL, 0, 0));    
+    // plotter.sendInstruction(new Instruction(Instruction.MOVE_REL, 0, 0));    
   }
   
   public void drawShape(RShape shape) {
@@ -159,6 +160,7 @@ public class Plotter extends PApplet {
       RPath p = shape.paths[i];
       RPoint[] points = p.getPoints();
       for (int k = 0; k < points.length-1; k++) {
+        //println("x:" + points[k].x + ", y:" + points[k].y);
         line(points[k].x, points[k].y, points[k+1].x, points[k+1].y);
         // ellipse(points[k].x, points[k].y, 10, 10);
         // ellipse(points[k+1].x, points[k+1].y, 10, 10);

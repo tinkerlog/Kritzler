@@ -54,7 +54,9 @@ public class Kritzler {
       else {
         String message = buf.toString();
         buf.setLength(0);
-        message = message.substring(0, message.length()-1);        
+        if (message.length() > 0) {
+          message = message.substring(0, message.length()-1);
+        }
         if (message.startsWith("#")) {
           System.out.println("bot: " + message);
         }
@@ -88,19 +90,13 @@ public class Kritzler {
     if (port == null) return;
     String msg = null;
     int x = (int)(i.x * scale);
-    int y = (int)(i.y * scale);
+    int y = (int)(i.y * scale);    
     switch (i.type) {
     case Instruction.MOVE_ABS:
-      msg = "M " + (x + tx) + " " + (y + ty) + '\r';
+      msg = "M " + (int)(x + tx) + " " + (int)(y + ty) + '\r';
       break;
     case Instruction.LINE_ABS:
-      msg = "L " + (x + tx) + " " + (y + ty) + '\r';
-      break;
-    case Instruction.MOVE_REL:
-      msg = "m " + x + " " + y + '\r';
-      break;
-    case Instruction.LINE_REL:
-      msg = "l " + x + " " + y + '\r';
+      msg = "L " + (int)(x + tx) + " " + (int)(y + ty) + '\r';
       break;
     }
     System.out.println("sending (" + currentInst + "): " + msg);
