@@ -51,8 +51,8 @@
 // pen states
 #define PEN_UP 0
 #define PEN_DOWN 1
-#define PEN_UP_POS 55
-#define PEN_DOWN_POS 90
+#define PEN_UP_POS 90
+#define PEN_DOWN_POS 55
 #define PEN_DELAY 500
 
 // driver states 

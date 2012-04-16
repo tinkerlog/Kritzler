@@ -58,6 +58,10 @@
 
 #define START_X 7500
 #define START_Y 7500
+#define MIN_X 4000
+#define MAX_X 11000
+#define MIN_Y 4000
+#define MAX_Y 12000
 
 // pulley radius 10mm
 //#define PULLEY_R 100
@@ -71,8 +75,8 @@
 // pen states
 #define PEN_UP 0
 #define PEN_DOWN 1
-#define PEN_UP_POS 90
-#define PEN_DOWN_POS 55
+#define PEN_UP_POS 55
+#define PEN_DOWN_POS 90
 // delay to wait for the pen to go up or down
 #define PEN_DELAY 1000
 
@@ -93,6 +97,8 @@
 #define CMD_CHAR_LINE_R 'l'
 #define CMD_CHAR_MOVE_A 'M'
 #define CMD_CHAR_MOVE_R 'm'
+#define CMD_CHAR_OFF 'o'
+#define CMD_CHAR_ON 'O'
 
 // pin defines
 #define MS1_PIN 2
@@ -111,6 +117,8 @@
 float m2s;
 Servo servo;
 
+long currentX = 0;
+long currentY = 0;
 long stepsM1 = 0;
 long stepsM2 = 0;
 long targetM1 = 0;
@@ -142,6 +150,8 @@ void setup() {
   m2s = (2 * PI * PULLEY_R) / STEPS_PER_ROT; 
 
   // compute starting pos
+  currentX = START_X;
+  currentY = START_Y;
   stepsM1 = computeA(START_X, START_Y) / m2s;
   stepsM2 = computeB(START_X, START_Y) / m2s;
   targetM1 = stepsM1;
@@ -229,7 +239,7 @@ ISR(TIMER2_OVF_vect) {
   byte cmd;
 
   preScaler++;
-  if (preScaler < 2) {
+  if (preScaler < 3) {
     return;
   }
   preScaler = 0;
@@ -242,24 +252,36 @@ ISR(TIMER2_OVF_vect) {
       digitalWrite(LED_PIN1, HIGH);
       newReadPtr = (readPtr + 1) % MAX_COMMANDS;
       // read the actual command 
-      tM1 = cmdBuffer[newReadPtr].targetM1;
-      tM2 = cmdBuffer[newReadPtr].targetM2;
       cmd = cmdBuffer[newReadPtr].cmd;
-      // compute deltas
-      dM1 = abs(tM1 - stepsM1);
-      dM2 = abs(tM2 - stepsM2);
-      err = dM1 - dM2;
-      // set directions
-      dsM1 = (tM1 > stepsM1) ? +1 : -1;
-      dsM2 = (tM2 > stepsM2) ? +1 : -1;
-      digitalWrite(DIR_PIN_M1, (tM1 > stepsM1) ? DIR_UP : DIR_DOWN);
-      digitalWrite(DIR_PIN_M2, (tM2 > stepsM2) ? DIR_DOWN : DIR_UP);
-      targetM1 = tM1;
-      targetM2 = tM2;
-      // go to pulsing/stepping state ...
-      driverState = D_STATE_PULSE;      
+      if ((cmd != CMD_CHAR_ON) && (cmd != CMD_CHAR_OFF)) {
+	tM1 = cmdBuffer[newReadPtr].targetM1;
+	tM2 = cmdBuffer[newReadPtr].targetM2;
+	// compute deltas
+	dM1 = abs(tM1 - stepsM1);
+	dM2 = abs(tM2 - stepsM2);
+	err = dM1 - dM2;
+	// set directions
+	dsM1 = (tM1 > stepsM1) ? +1 : -1;
+	dsM2 = (tM2 > stepsM2) ? +1 : -1;
+	digitalWrite(DIR_PIN_M1, (tM1 > stepsM1) ? DIR_UP : DIR_DOWN);
+	digitalWrite(DIR_PIN_M2, (tM2 > stepsM2) ? DIR_DOWN : DIR_UP);
+	targetM1 = tM1;
+	targetM2 = tM2;
+	// go to pulsing/stepping state ...
+	driverState = D_STATE_PULSE;      
+      }
       // ... but move the pen up or down before, if needed
       switch (cmd) {
+      case CMD_CHAR_ON:
+	digitalWrite(LED_PIN1, HIGH);
+        digitalWrite(ENABLE_PIN, LOW);
+	readPtr = newReadPtr;
+	break;
+      case CMD_CHAR_OFF:
+	digitalWrite(LED_PIN1, LOW);
+        digitalWrite(ENABLE_PIN, HIGH);
+	readPtr = newReadPtr;
+	break;
       case CMD_CHAR_MOVE_A:
       case CMD_CHAR_MOVE_R:
 	if (penState == PEN_DOWN) {
@@ -291,17 +313,18 @@ ISR(TIMER2_OVF_vect) {
       */
     }
     else {
+      /*
       idleCount++;
       if (idleCount == 10000) {
 	// disable the motors if not in use
         digitalWrite(LED_PIN1, LOW);
         digitalWrite(ENABLE_PIN, HIGH);
       }
+      */
     }
     break;
   case D_STATE_WAIT_SERVO:
     if (servoDelay++ >= PEN_DELAY) {
-      // Serial.println("WAIT_SERVO --> PULSE");
       driverState = D_STATE_PULSE;
       servoDelay = 0;
     }
@@ -335,7 +358,6 @@ ISR(TIMER2_OVF_vect) {
     digitalWrite(STEP_PIN_M1, LOW);
     digitalWrite(STEP_PIN_M2, LOW);
     if ((stepsM1 == targetM1) && (stepsM2 == targetM2)) {
-      // Serial.println("PULSE_DOWN --> IDLE");
       driverState = D_STATE_IDLE;
       // signal that we have consumed the command by advancing the read pointer
       readPtr = newReadPtr;
@@ -364,45 +386,6 @@ int computeB(long x, long y) {
   return sqrt((distanceX * distanceX) + y * y);
 }
 
-void readToken(char *buf) {
-  int c;
-  while (true) {
-    if (Serial.available()) {
-      c = Serial.read();
-      //DEBUG_PRINT(c);
-      if ((c == ' ') || (c == 13) || (c == -1) || (c == ';')) {
-        break;
-      }
-      *buf++ = c;
-    }
-  }
-  *buf = '\0';
-}
-
-void skipWhiteSpace() {
-  int c;
-  while (true) {
-    if (Serial.available()) {
-      c = Serial.peek();
-      if ((c != ' ') && (c != 13)) {
-        break;
-      }
-      else {
-	Serial.read();
-      }
-    }
-  }
-}
-
-long readLong() {
-  char buf[20]; 
-  // skipWhiteSpace();
-  readToken(buf);
-  Serial.print("buf:");
-  Serial.println(buf);
-  return atol(buf);
-}
-
 char *readToken(char *str, char *buf, char delimiter) {
   uint8_t c = 0;
   while (true) {
@@ -422,7 +405,7 @@ byte parseLine(char *line) {
 
   byte newWritePtr;
   char tcmd;
-  long tx, ty;
+  long tx = 0, ty = 0;
   long a, b;
   char buf[10];
 
@@ -431,10 +414,6 @@ byte parseLine(char *line) {
   // wait until there is space for this command
   do {
     newWritePtr = (writePtr+1) % MAX_COMMANDS;
-    // Serial.print("write:");
-    // Serial.print(newWritePtr, DEC);
-    // Serial.print(", read:");
-    // Serial.println(readPtr, DEC);
     if (newWritePtr == readPtr) {
       delay(1000);
       Serial.println("#waiting ...");
@@ -442,20 +421,40 @@ byte parseLine(char *line) {
   } while (newWritePtr == readPtr);
 
   switch (line[0]) {
+  case 'm':
+  case 'l':
+    tcmd = line[0];
+    line += 2; // skip command and space
+    line = readToken(line, buf, ' ');
+    tx = atol(buf) + currentX;
+    line = readToken(line, buf, ' ');
+    ty = atol(buf) + currentY;
+    break;
   case 'M':
   case 'L':
     tcmd = line[0];
+    line += 2; // skip command and space
+    line = readToken(line, buf, ' ');
+    tx = atol(buf);
+    line = readToken(line, buf, ' ');
+    ty = atol(buf);
+    break;
+  case 'O':
+  case 'o':
+    tcmd = line[0];
+    tx = currentX;
+    ty = currentY;
     break;
   default:
     Serial.print("#unknown command: ");
     Serial.println(line[0]);
     return 1;
   }
-  line += 2; // skip command and space
-  line = readToken(line, buf, ' ');
-  tx = atol(buf);
-  line = readToken(line, buf, ' ');
-  ty = atol(buf);
+
+  if (tx < MIN_X) tx = MIN_X;
+  if (tx > MAX_X) tx = MAX_X;
+  if (ty < MIN_Y) ty = MIN_Y;
+  if (ty > MAX_Y) ty = MAX_Y;
 
   Serial.print("#cmd: ");
   Serial.print(tcmd);
@@ -468,6 +467,8 @@ byte parseLine(char *line) {
   a = computeA(tx, ty);
   b = computeB(tx, ty);
 
+  currentX = tx;
+  currentY = ty;
   cmdBuffer[newWritePtr].x = tx;
   cmdBuffer[newWritePtr].y = ty;
   cmdBuffer[newWritePtr].cmd = tcmd;
@@ -490,8 +491,8 @@ byte readLine(char *line, byte size) {
       c = Serial.read();
       length++;
       if ((c == '\r') || (c == '\n')) {
-        break;
 	*line = '\0';
+        break;
       }
       *line++ = c;
     }
