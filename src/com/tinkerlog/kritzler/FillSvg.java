@@ -19,7 +19,7 @@ public class FillSvg extends PApplet {
   private static final String BUFFER_NEW_PATH = "buffer_new/";
   private static final String BUFFER_DENIED_PATH = "buffer_denied/";
   
-  private static final int MAX_X = 600;
+  private static final int MAX_X = 3000;
   private static final int SCREEN_PADDING = 10;
   private static final int STEP_WIDTH = 10;
   
@@ -49,7 +49,8 @@ public class FillSvg extends PApplet {
     case STATE_START:
       shape = null;
       translate(SCREEN_PADDING, SCREEN_PADDING);
-      rect(0, 0, MAX_X, MAX_X);
+      fill(255);
+      rect(0, 0, MAX_X, MAX_X);      
       state = STATE_WAITING;
       break;
     case STATE_WAITING:

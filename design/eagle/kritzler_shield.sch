@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.1">
+<eagle version="6.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -96,6 +96,14 @@
 <layer number="214" name="214bmp" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="215" name="215bmp" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="216" name="216bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="217" name="217bmp" color="18" fill="1" visible="no" active="no"/>
+<layer number="218" name="218bmp" color="19" fill="1" visible="no" active="no"/>
+<layer number="219" name="219bmp" color="20" fill="1" visible="no" active="no"/>
+<layer number="220" name="220bmp" color="21" fill="1" visible="no" active="no"/>
+<layer number="221" name="221bmp" color="22" fill="1" visible="no" active="no"/>
+<layer number="222" name="222bmp" color="23" fill="1" visible="no" active="no"/>
+<layer number="223" name="223bmp" color="24" fill="1" visible="no" active="no"/>
+<layer number="224" name="224bmp" color="25" fill="1" visible="no" active="no"/>
 <layer number="250" name="Descript" color="3" fill="1" visible="no" active="no"/>
 <layer number="251" name="SMDround" color="12" fill="11" visible="no" active="no"/>
 <layer number="254" name="cooling" color="7" fill="1" visible="yes" active="yes"/>
@@ -4843,6 +4851,127 @@ Button commonly used for reset or general input. Spark Fun Electronics SKU : COM
 </deviceset>
 </devicesets>
 </library>
+<library name="con-yamaichi">
+<description>&lt;b&gt;Yamaichi Connectors&lt;/b&gt;&lt;p&gt;
+Mini-DIN, USB, Fire Wire&lt;br&gt;
+DIN female/male, etc.&lt;p&gt;
+&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
+<packages>
+<package name="FPS009-3000">
+<description>&lt;b&gt;SD Card and MMC Reader (Manual Insertion)&lt;/b&gt;&lt;p&gt;
+Source: http://www.yamaichi.de/pdf/c_fps009_3000.pdf</description>
+<wire x1="4.7" y1="-26" x2="0.95" y2="-26" width="0.2032" layer="51"/>
+<wire x1="0.95" y1="-26" x2="-14.6" y2="-26" width="0.2032" layer="21"/>
+<wire x1="-14.6" y1="-26" x2="-15.9" y2="-26" width="0.2032" layer="51"/>
+<wire x1="-15.9" y1="-26" x2="-15.9" y2="-21.85" width="0.2032" layer="51"/>
+<wire x1="-15.9" y1="-21.85" x2="-15.9" y2="1.2" width="0.2032" layer="21"/>
+<wire x1="-15.9" y1="1.2" x2="0.9" y2="1.2" width="0.2032" layer="21"/>
+<wire x1="0.9" y1="1.2" x2="4.75" y2="1.2" width="0.2032" layer="51"/>
+<wire x1="4.75" y1="1.2" x2="7.2" y2="1.2" width="0.2032" layer="21"/>
+<wire x1="7.2" y1="1.2" x2="7.2" y2="-1.55" width="0.2032" layer="21"/>
+<wire x1="7.2" y1="-1.55" x2="0.25" y2="-1.55" width="0.2032" layer="21"/>
+<wire x1="0.25" y1="-1.55" x2="0.25" y2="-4" width="0.2032" layer="21"/>
+<wire x1="0.25" y1="-4" x2="-2.75" y2="-4" width="0.2032" layer="21"/>
+<wire x1="-2.75" y1="-4" x2="-2.75" y2="-6.65" width="0.2032" layer="21"/>
+<wire x1="-2.75" y1="-6.65" x2="-2.2" y2="-6.65" width="0.2032" layer="21"/>
+<wire x1="-2.2" y1="-6.65" x2="-2.2" y2="-9.15" width="0.2032" layer="21"/>
+<wire x1="-2.2" y1="-9.15" x2="-1.5" y2="-9.15" width="0.2032" layer="21"/>
+<wire x1="-1.5" y1="-9.15" x2="-1.5" y2="-14.1" width="0.2032" layer="21"/>
+<wire x1="-1.5" y1="-14.1" x2="-2.2" y2="-14.1" width="0.2032" layer="21"/>
+<wire x1="-2.2" y1="-14.1" x2="-2.2" y2="-23.4" width="0.2032" layer="21"/>
+<wire x1="4.7" y1="-26" x2="7.2" y2="-26" width="0.2032" layer="21"/>
+<wire x1="7.2" y1="-26" x2="7.2" y2="-23.4" width="0.2032" layer="21"/>
+<wire x1="7.2" y1="-23.4" x2="-2.2" y2="-23.4" width="0.2032" layer="21"/>
+<smd name="M1" x="2.85" y="1.55" dx="3" dy="2.7" layer="1"/>
+<smd name="M2" x="2.85" y="-26.55" dx="3" dy="2.7" layer="1"/>
+<smd name="1" x="-0.915" y="-5.3" dx="2.65" dy="1.1" layer="1"/>
+<smd name="2" x="-0.415" y="-7.8" dx="2.65" dy="1.1" layer="1"/>
+<smd name="3" x="0.385" y="-10.3" dx="2.65" dy="1.1" layer="1"/>
+<smd name="4" x="0.385" y="-12.8" dx="2.65" dy="1.1" layer="1"/>
+<smd name="5" x="-0.415" y="-15.3" dx="2.65" dy="1.1" layer="1"/>
+<smd name="6" x="-0.415" y="-17.8" dx="2.65" dy="1.1" layer="1"/>
+<smd name="7" x="-0.415" y="-20.3" dx="2.65" dy="1.1" layer="1"/>
+<smd name="8" x="-0.415" y="-21.925" dx="2.65" dy="1.1" layer="1"/>
+<smd name="9" x="1.885" y="-2.8" dx="2.65" dy="1.1" layer="1"/>
+<smd name="WRITE_PROT" x="-16.75" y="-25.95" dx="3.5" dy="1.4" layer="1"/>
+<smd name="COM_TERM" x="-16.75" y="-24.55" dx="3.5" dy="1" layer="1"/>
+<smd name="DETECT" x="-17.25" y="-22.85" dx="2.5" dy="1.4" layer="1"/>
+<text x="-13.335" y="-27.94" size="1.27" layer="25">&gt;NAME</text>
+<text x="-12.065" y="-20.32" size="1.27" layer="27" rot="R90">&gt;VALUE</text>
+<hole x="0" y="0" drill="1.6"/>
+<hole x="0" y="-24.8" drill="1.1"/>
+</package>
+</packages>
+<symbols>
+<symbol name="FPS009-3000">
+<wire x1="-12.7" y1="12.7" x2="-12.7" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-12.7" y1="-12.7" x2="10.16" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-12.7" x2="10.16" y2="12.7" width="0.254" layer="94"/>
+<wire x1="10.16" y1="12.7" x2="-12.7" y2="12.7" width="0.254" layer="94"/>
+<text x="-12.7" y="13.97" size="1.778" layer="95">&gt;NAME</text>
+<text x="-12.7" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="1" x="-15.24" y="10.16" visible="pin" length="short" direction="in"/>
+<pin name="2" x="-15.24" y="7.62" visible="pin" length="short" direction="in"/>
+<pin name="3" x="-15.24" y="5.08" visible="pin" length="short" direction="in"/>
+<pin name="4" x="-15.24" y="2.54" visible="pin" length="short" direction="in"/>
+<pin name="5" x="-15.24" y="0" visible="pin" length="short" direction="in"/>
+<pin name="6" x="-15.24" y="-2.54" visible="pin" length="short" direction="in"/>
+<pin name="7" x="-15.24" y="-5.08" visible="pin" length="short" direction="in"/>
+<pin name="8" x="-15.24" y="-7.62" visible="pin" length="short" direction="in"/>
+<pin name="9" x="-15.24" y="-10.16" visible="pin" length="short" direction="in"/>
+<pin name="DETECT" x="12.7" y="-5.08" visible="pin" length="short" direction="in" rot="R180"/>
+<pin name="COM_TERM" x="12.7" y="-7.62" visible="pin" length="short" direction="in" rot="R180"/>
+<pin name="WRITE_PROT" x="12.7" y="-10.16" visible="pin" length="short" direction="in" rot="R180"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="FPS009-300*" prefix="X">
+<description>&lt;b&gt;SD Card and MMC Reader (Manual Insertion)&lt;/b&gt;&lt;p&gt;
+Source: http://www.yamaichi.de/pdf/c_fps009_3000.pdf</description>
+<gates>
+<gate name="G$1" symbol="FPS009-3000" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="FPS009-3000">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+<connect gate="G$1" pin="4" pad="4"/>
+<connect gate="G$1" pin="5" pad="5"/>
+<connect gate="G$1" pin="6" pad="6"/>
+<connect gate="G$1" pin="7" pad="7"/>
+<connect gate="G$1" pin="8" pad="8"/>
+<connect gate="G$1" pin="9" pad="9"/>
+<connect gate="G$1" pin="COM_TERM" pad="COM_TERM"/>
+<connect gate="G$1" pin="DETECT" pad="DETECT"/>
+<connect gate="G$1" pin="WRITE_PROT" pad="WRITE_PROT"/>
+</connects>
+<technologies>
+<technology name="0">
+<attribute name="MF" value="" constant="no"/>
+<attribute name="MPN" value="" constant="no"/>
+<attribute name="OC_FARNELL" value="unknown" constant="no"/>
+<attribute name="OC_NEWARK" value="unknown" constant="no"/>
+</technology>
+<technology name="1">
+<attribute name="MF" value="" constant="no"/>
+<attribute name="MPN" value="FPS009-3001-BL" constant="no"/>
+<attribute name="OC_FARNELL" value="1143952" constant="no"/>
+<attribute name="OC_NEWARK" value="91K9875" constant="no"/>
+</technology>
+<technology name="2">
+<attribute name="MF" value="" constant="no"/>
+<attribute name="MPN" value="" constant="no"/>
+<attribute name="OC_FARNELL" value="unknown" constant="no"/>
+<attribute name="OC_NEWARK" value="unknown" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -4890,6 +5019,7 @@ Button commonly used for reset or general input. Spark Fun Electronics SKU : COM
 <part name="P+2" library="supply1" deviceset="+5V" device=""/>
 <part name="P+11" library="supply1" deviceset="V+" device=""/>
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
+<part name="X3" library="con-yamaichi" deviceset="FPS009-300*" device="" technology="2"/>
 </parts>
 <sheets>
 <sheet>
@@ -4963,6 +5093,7 @@ Button commonly used for reset or general input. Spark Fun Electronics SKU : COM
 <attribute name="VALUE" x="75.184" y="118.364" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="GND7" gate="1" x="66.04" y="106.68"/>
+<instance part="X3" gate="G$1" x="88.9" y="40.64"/>
 </instances>
 <busses>
 </busses>
