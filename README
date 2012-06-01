@@ -1,8 +1,7 @@
-==============
  Der Kritzler
 ==============
 
- This is a software to drive a 2D plotting device.
+ Der Kritzler is a software and hardware platform for developing wall plotters. It consists of a set of Processing sketches (see src/ folder), Arduino firmware (firmware/ folder) and some electronics (some files in the design/ folder). 
  
  src/ 
       Contains Processing/Java sources, ready to use in Eclipse.
@@ -26,5 +25,8 @@
       
  plotter.sh
       Starts the processing sketch that sends SVGs to the Kritzler.
-      
-      
+
+Changelog
+=========
++ Real-time pen location tracking added by Jason Webb (5/25/2012)
++ Javadoc comments and consistent formatting added by Jason Webb (5/25/2012)     
