@@ -1,9 +1,7 @@
 package com.tinkerlog.kritzler;
 
 import geomerative.RG;
-import geomerative.RPath;
-import geomerative.RPoint;
-import geomerative.RShape;
+import geomerative.*;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -46,11 +44,12 @@ public class Plotter extends PApplet {
     // private boolean serialAvailable = false;
 
     private static final float STROKE_WEIGHT = 4.0F;
-    private static final float DELTA_STEP = 10.0F;
+    private static final float DELTA_STEP = 100.0F;
 
     float screenScale = 0.0F;
     float plotterScale = 1.0F;
-    float dx, dy = 0.0F;
+    float svgScale = 9.0F;
+    float dx, dy;
 
     private RShape shape;
     private Serial port;
@@ -58,10 +57,15 @@ public class Plotter extends PApplet {
     private String currentFileName;
     private List<Instruction> instructions;
     private PrintWriter output;
+    private int currentFileIndex = 0;
+    private int availableFiles;
 
     private long nextUpdate = 0;
     private boolean paused = false;
     private boolean plotting = false;
+    
+    private boolean DRAW_GRID = true;
+    private boolean DRAW_BOUNDING_BOX = true;
 
     /**
      * Initial sketch set up
@@ -152,9 +156,6 @@ public class Plotter extends PApplet {
                 // When finished drawing, return to the coordinates specified by
                 // HOME_X and HOME_Y
                 if (plotter.isFinished()) {
-                    plotter.sendInstruction(new Instruction(
-                            Instruction.MOVE_ABS, HOME_X, HOME_Y));
-
                     drawCanvas();
                     plotter.setState(plotter.STATE_FINISHED);
                     plotter.drawBot();
@@ -199,9 +200,48 @@ public class Plotter extends PApplet {
         translate(SCREEN_PADDING, SCREEN_PADDING);
         scale(screenScale * plotterScale);
         rect(0, 0, MAX_PLOTTER_X, MAX_PLOTTER_Y);
+        
+        // Draw the grid
+        if(DRAW_GRID) {
+            stroke(210);
+            int cols = MAX_PLOTTER_X / 100;
+            int rows = MAX_PLOTTER_Y / 100;
+            
+            for(int i=0; i<cols; i++)
+                line(i*100, 0, i*100, MAX_PLOTTER_Y);
+            
+            for(int i=0; i<rows; i++)
+                line(0, i*100, MAX_PLOTTER_X, i*100);
+        }
+        
+        // Draw the homing crosshairs
+        strokeWeight(1);
+        stroke(150);
+        line(MAX_PLOTTER_X/2, 0, MAX_PLOTTER_X/2, MAX_PLOTTER_Y);
+        line(0, MAX_PLOTTER_Y/2, MAX_PLOTTER_X, MAX_PLOTTER_Y/2);
 
+        translate(dx, dy);        
+        
+        // Draw the bounding box of the current shape
+        if(DRAW_BOUNDING_BOX) {
+            // Bounding box
+            RPoint bounds[] = shape.getBoundsPoints();
+            strokeWeight(5);
+            stroke(255,0,0);
+            line( bounds[0].x, bounds[0].y, bounds[1].x, bounds[1].y );
+            line( bounds[1].x, bounds[1].y, bounds[2].x, bounds[2].y );
+            line( bounds[2].x, bounds[2].y, bounds[3].x, bounds[3].y );
+            line( bounds[3].x, bounds[3].y, bounds[0].x, bounds[0].y );
+            
+            // Center cross hairs
+            RPoint center = shape.getCenter();
+            line( center.x, bounds[0].y, center.x, bounds[0].y - 200 );
+            line( center.x, bounds[3].y, center.x, bounds[3].y + 200 );
+            line( bounds[0].x, center.y, bounds[0].x - 200, center.y );
+            line( bounds[1].x, center.y, bounds[1].x + 200, center.y );
+        }
+        
         // Draw the SVG content
-        translate(dx, dy);
         strokeWeight(STROKE_WEIGHT);
         stroke(0);
         drawShape(shape);
@@ -364,8 +404,43 @@ public class Plotter extends PApplet {
 
         // e = export Instructions to text file
         case 'e':
-            exportInstructions();
+            export();
             break;
+            
+        // ] = next SVG file
+        case ']':
+            if(currentFileIndex < availableFiles-1)
+                currentFileIndex++;
+            else
+                currentFileIndex = 0;
+            
+            shape = loadNewShape();
+            state = STATE_PLOTTING_SCREEN;
+            break;
+        
+        // [ = previous SVG file
+        case '[':
+            if(currentFileIndex > 0)
+                currentFileIndex--;
+            else
+                currentFileIndex = availableFiles-1;
+            
+            shape = loadNewShape();
+            state = STATE_PLOTTING_SCREEN;            
+            break;
+            
+        // g = toggle grid
+        case 'g':
+            DRAW_GRID = !DRAW_GRID;
+            state = STATE_PLOTTING_SCREEN;
+            break;
+            
+        // b = toggle bounding box
+        case 'b':
+            DRAW_BOUNDING_BOX = !DRAW_BOUNDING_BOX;
+            state = STATE_PLOTTING_SCREEN;
+            break;
+            
         }
     }
 
@@ -420,13 +495,15 @@ public class Plotter extends PApplet {
                 return filename.endsWith("svg");
             }
         });
+        
+        availableFiles = listing.length;
 
         // Load the first SVG file from the list
         if (listing != null && listing.length > 0) {
-            currentFileName = listing[0];
+            currentFileName = listing[currentFileIndex];
             System.out.println("loading " + currentFileName);
             RShape shape = RG.loadShape(BUFFER_ACC_PATH + currentFileName);
-            shape.scale(1.0F);
+            shape.scale(svgScale);
             print(shape, "loaded: ");
             return shape;
         }
@@ -434,24 +511,35 @@ public class Plotter extends PApplet {
         return null;
     }
 
-    private void exportInstructions() {
+    /**
+     * Export Instructions to a text file
+     */
+    private void export() {
         print("Outputting Instructions to file ... ");
 
+        // Generate instructions right now
         List<Instruction> instructions = new ArrayList<Instruction>();
         convertToInstructions(instructions, shape);
 
+        // Verify Instructions
         if (instructions == null || instructions.size() == 0) {
             println("failed\nNo instructions!");
             return;
         }
 
-        output = createWriter("instructions.txt");
+        // Prepare the output file
+        output = createWriter("output/instructions.txt");
+        
+        // TODO: Write configuration information to the file
+        
 
+        // Write all the Instructions to the file
         for (int i = 0; i < instructions.size(); i++) {
             Instruction instruction = instructions.get(i);
             output.println(instruction.toString());
         }
 
+        // Finish the file
         output.flush();
         output.close();
 

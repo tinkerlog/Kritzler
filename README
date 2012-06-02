@@ -1,7 +1,7 @@
- Der Kritzler
+Der Kritzler
 ==============
 
- Der Kritzler is a software and hardware platform for developing wall plotters. It consists of a set of Processing sketches (see src/ folder), Arduino firmware (firmware/ folder) and some electronics (some files in the design/ folder). 
+Der Kritzler is a software and hardware platform for developing wall plotters. It consists of a set of Processing sketches (see src/ folder), Arduino firmware (firmware/ folder) and some electronics (some files in the design/ folder). 
  
  src/ 
       Contains Processing/Java sources, ready to use in Eclipse.
@@ -28,5 +28,8 @@
 
 Changelog
 =========
-+ Real-time pen location tracking added by Jason Webb (5/25/2012)
-+ Javadoc comments and consistent formatting added by Jason Webb (5/25/2012)     
++ Added real-time pen location tracking - Jason Webb (5/25/2012)
++ Added Javadoc comments and consistent formatting added by - Jason Webb (5/25/2012)
++ Added ability to navigate through all SVG files in BUFFER_ACC folder using [ (back) and ] (forward) - Jason Webb (5/31/2012)
++ Added toggle-able grid to canvas, for accurate positioning (toggle with 'g') - Jason Webb (6/1/2012)
++ Added toggle-able bounding box for SVG shape, with centroid markings, for accurate positioning (toggle with 'b') - Jason Webb (6/1/2012)
