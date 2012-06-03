@@ -237,5 +237,9 @@ public class Kritzler {
     public void setState(int state) {
         this.currentState = state;
     }
+    
+    public int getState() {
+        return this.currentState;
+    }
 
 }

@@ -27,9 +27,10 @@ Der Kritzler is a software and hardware platform for developing wall plotters. I
       Starts the processing sketch that sends SVGs to the Kritzler.
 
 Changelog
-=========
+==========
 + Added real-time pen location tracking - Jason Webb (5/25/2012)
 + Added Javadoc comments and consistent formatting added by - Jason Webb (5/25/2012)
 + Added ability to navigate through all SVG files in BUFFER_ACC folder using [ (back) and ] (forward) - Jason Webb (5/31/2012)
 + Added toggle-able grid to canvas, for accurate positioning (toggle with 'g') - Jason Webb (6/1/2012)
 + Added toggle-able bounding box for SVG shape, with centroid markings, for accurate positioning (toggle with 'b') - Jason Webb (6/1/2012)
++ Background color (canvas border) now changes to reflect state of pen plotter (same color as pen location marker). - Jason Webb (6/3/2012)

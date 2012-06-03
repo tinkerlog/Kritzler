@@ -48,7 +48,7 @@ public class Plotter extends PApplet {
 
     float screenScale = 0.0F;
     float plotterScale = 1.0F;
-    float svgScale = 9.0F;
+    float svgScale = 5.0F;
     float dx, dy;
 
     private RShape shape;
@@ -156,19 +156,19 @@ public class Plotter extends PApplet {
                 // When finished drawing, return to the coordinates specified by
                 // HOME_X and HOME_Y
                 if (plotter.isFinished()) {
-                    drawCanvas();
                     plotter.setState(plotter.STATE_FINISHED);
+                    drawCanvas();                    
                     plotter.drawBot();
 
                     state = STATE_WAITING;
                 } else {
-                    drawCanvas();
                     plotter.setState(plotter.STATE_PLOTTING);
+                    drawCanvas();                    
                     plotter.drawBot();
                 }
             } else {
-                drawCanvas();
                 plotter.setState(plotter.STATE_PAUSED);
+                drawCanvas();                
                 plotter.drawBot();
             }
             break;
@@ -192,13 +192,31 @@ public class Plotter extends PApplet {
      * Draw the canvas to the screen
      */
     public void drawCanvas() {
-        background(100);
-
-        fill(255);
+        
+        // Change the background color to match the state of the plotter
+        if( plotter != null ) {
+            int state = plotter.getState();
+            switch(state) {
+            case 0:
+                background(33, 134, 248, 100);
+                break;
+            case 1:
+                background(254, 26, 26, 100);
+                break;
+            case 2:
+                background(28, 247, 12, 100);
+                break;
+            default:
+                background(100);
+            }
+        } else {
+            background(100);
+        }
 
         // Draw the canvas rectangle
         translate(SCREEN_PADDING, SCREEN_PADDING);
         scale(screenScale * plotterScale);
+        fill(255);        
         rect(0, 0, MAX_PLOTTER_X, MAX_PLOTTER_Y);
         
         // Draw the grid
@@ -503,7 +521,7 @@ public class Plotter extends PApplet {
             currentFileName = listing[currentFileIndex];
             System.out.println("loading " + currentFileName);
             RShape shape = RG.loadShape(BUFFER_ACC_PATH + currentFileName);
-            shape.scale(svgScale);
+            shape.scale(svgScale, shape.getCenter());
             print(shape, "loaded: ");
             return shape;
         }
