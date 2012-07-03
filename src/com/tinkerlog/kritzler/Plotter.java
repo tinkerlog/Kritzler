@@ -12,7 +12,11 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import com.tinkerlog.kritzler.FillSvg.MyPoint;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -58,6 +62,10 @@ public class Plotter extends PApplet {
   
   private static final int BACKGROUND_STD = 0xFFA0A0A0;
   private static final int BACKGROUND_PAUSED = 0xFFA07070;
+  private static final int CANVAS_BACKGROUND_BLACK = 0xFF202020;
+  private static final int CANVAS_BACKGROUND_WHITE = 0xFFFFFFFF;
+  private static final int SHAPE_STROKE_BLACK = 0xFF000000;
+  private static final int SHAPE_STROKE_WHITE = 0xFFFFFFFF;
   private static final int PLOTTER_STD = 0x642186F8;
   private static final int PLOTTER_PAUSED = 0x64FE1A1A; 
   private static final int PLOTTER_FINISHED = 0x641AFE1A; 
@@ -68,13 +76,7 @@ public class Plotter extends PApplet {
   private static final float STROKE_WEIGHT_SHAPE = 1.0F;
   private static final int STROKE_SHAPE = 0xFF808080;
   private static final float DELTA_STEP = 20.0F;
-  
-  private int currentFileIndex = 0;
-  private int availableFiles;
-  
-  private boolean serialAvailable = true;
-  // private boolean serialAvailable = false;
-
+  private static final float MAX_COMPARE_DELTA = 70.0F;
   
   float screenScale = 0.0F;
   float plotterScale = 1.0F;
@@ -108,6 +110,9 @@ public class Plotter extends PApplet {
 
   private boolean drawGrid = true;
   private boolean drawBoundingBox = true;
+  private boolean blackOnWhite = true;
+  private int canvasBackground = CANVAS_BACKGROUND_WHITE;
+  private int shapeStroke = SHAPE_STROKE_BLACK;
 
   /**
    * Initial sketch set up
@@ -176,28 +181,37 @@ public class Plotter extends PApplet {
       ; 
     
     // flip/mirror switches
+    int y = 140;
     cp5.addToggle("toggleHorizontal")
       .setLabel("flip horizontal")
-      .setPosition(xsize + 10, 140)
+      .setPosition(xsize + 10, y)
       .setSize(25,10)
       .setValue(false)
       .setMode(ControlP5.SWITCH)
       ;
     cp5.addToggle("toggleVertical")
       .setLabel("flip vertical")
-      .setPosition(xsize + 10, 170)
+      .setPosition(xsize + 10, y + 30)
       .setSize(25,10)
       .setValue(false)
       .setMode(ControlP5.SWITCH)
       ;       
-    
+    cp5.addToggle("toggleBW")
+      .setLabel("toggle B/W")
+      .setPosition(xsize + 10, y + 60)
+      .setSize(25,10)
+      .setValue(false)
+      .setMode(ControlP5.SWITCH)
+      ;       
+
     // setup serial ports
+    y = 250;
     cp5.addTextlabel("serlabel")
       .setText("SERIAL")
-      .setPosition(xsize + 8, 222)
+      .setPosition(xsize + 8, y + 2)
       ;
     portsList = cp5.addDropdownList("ports")
-      .setPosition(xsize + 10, 220)
+      .setPosition(xsize + 10, y)
       .setItemHeight(15)
       .setHeight(60)
       .setWidth(150)
@@ -215,15 +229,16 @@ public class Plotter extends PApplet {
     startSerial(ports[0]); // default
     
     // setup files
+    y = 310;
     cp5.addTextlabel("filelabel")
       .setText("SELECT FILE")
-      .setPosition(xsize + 8, 292)
+      .setPosition(xsize + 8, y + 2)
       ;
     filesList = cp5.addDropdownList("files")
-      .setPosition(xsize + 10, 290)
+      .setPosition(xsize + 10, y)
       .setBarHeight(15)
       .setItemHeight(15)
-      .setHeight(45)
+      .setHeight(60)
       .setWidth(150)
       .setIndex(0)
       ;    
@@ -236,25 +251,26 @@ public class Plotter extends PApplet {
     }
     
     // buttons
+    y = 370;
     cp5.addTextlabel("runlabel")
       .setText("RUN")
-      .setPosition(xsize + 8, 362)
+      .setPosition(xsize + 8, y + 22)
       ;
     startButton = cp5.addButton("start")
-      .setPosition(xsize + 10, 340)
+      .setPosition(xsize + 10, y)
       .setWidth(49)
       .setValue(0);    
     pauseButton = cp5.addButton("pause")
-      .setPosition(xsize + 60, 340)
+      .setPosition(xsize + 60, y)
       .setWidth(49)
       .setValue(0);
     stopButton = cp5.addButton("stop")
-      .setPosition(xsize + 110, 340)
+      .setPosition(xsize + 110, y)
       .setWidth(49)
       .setValue(0);
 
     statusField = cp5.addTextfield("state")
-      .setPosition(xsize + 10, 400)
+      .setPosition(xsize + 10, 410)
       .setWidth(150)
       .setText("hello")
       .setLock(true);
@@ -343,6 +359,12 @@ public class Plotter extends PApplet {
     actOnKey('M');
   }  
   
+  public void toggleBW(boolean b) {
+    if (buttonsEnabled) {
+      actOnKey('w');
+    }
+  }
+  
   public void scaleUp(int value) {
     actOnKey('+');
   }
@@ -361,10 +383,6 @@ public class Plotter extends PApplet {
     noStroke();
     fill(BACKGROUND_STD);
     rect(width - MENU_X, 0, MENU_X, height);
-    
-//    if (portsList.isOpen()) {
-//      portsList.bringToFront();
-//    }
     
     pushMatrix();    
     oldState = state;
@@ -413,7 +431,10 @@ public class Plotter extends PApplet {
     // object
     case STATE_SETUP_PLOTTER:
       currentInstructions = new ArrayList<Instruction>();
-      convertToInstructions(currentInstructions, shape);
+      List<RPath> paths = new ArrayList<RPath>();
+      getAllPaths(paths, shape);
+      paths = sortPaths(paths);
+      convertToInstructions(currentInstructions, paths);
       setupPlotter(currentInstructions);
       state = STATE_PLOTTING;
       break;
@@ -517,7 +538,8 @@ public class Plotter extends PApplet {
     // Draw the canvas rectangle
     // graphics.translate(SCREEN_PADDING, SCREEN_PADDING);
     graphics.scale(screenScale * plotterScale);
-    graphics.fill(255);        
+    graphics.fill(canvasBackground);
+ 
     graphics.rect(0, 0, MAX_PLOTTER_X, MAX_PLOTTER_Y);
 
     // Draw the grid
@@ -563,7 +585,7 @@ public class Plotter extends PApplet {
     
     // Draw the SVG content
     graphics.strokeWeight(STROKE_WEIGHT_SHAPE);
-    graphics.stroke(STROKE_SHAPE);
+    graphics.stroke(shapeStroke);
     if (shape != null) {
       drawShape(graphics, shape);
     }
@@ -626,8 +648,7 @@ public class Plotter extends PApplet {
    * @param shape
    *            RShape to proces
    */
-  public void convertToInstructions(List<Instruction> instructions,
-      RShape shape) {
+  public void convertToInstructions(List<Instruction> instructions, RShape shape) {
     // Recurse through any children of current shape
     for (int i = 0; i < shape.countChildren(); i++) {
       RShape s = shape.children[i];
@@ -652,6 +673,56 @@ public class Plotter extends PApplet {
     }    
   }
 
+  public void convertToInstructions(List<Instruction> instructions, List<RPath> paths) {
+    for (RPath p : paths) {
+      RPoint[] points = p.getPoints();
+      RPoint p1 = points[0];
+
+      // Move to that point
+      instructions.add(new Instruction(Instruction.MOVE_ABS, p1.x, p1.y));
+
+      // Draw lines to any subsequent points
+      for (int k = 0; k < points.length - 1; k++) {
+        RPoint p2 = points[k];
+        instructions.add(new Instruction(Instruction.LINE_ABS, p2.x, p2.y));
+      }      
+    }
+  }
+  
+  public List<RPath> sortPaths(List<RPath> paths) {
+    println("sorting paths ...");
+    List<RPath> resultPath = new ArrayList<RPath>();
+    PathComparator comparator = new PathComparator();
+    RPoint tl = shape.getTopLeft();
+    RPoint br = shape.getBottomRight();
+    
+    float y = tl.y;
+    while (y < br.y) {
+      List<RPath> sortedRow = new ArrayList<RPath>();
+      for (int i = 0; i < paths.size(); i++) {
+        RPath path = paths.get(i);
+        RPoint p = path.getPoints()[0];
+        if (p.y < y + MAX_COMPARE_DELTA && p.y >= y) {
+          sortedRow.add(path);
+        }
+      }
+      Collections.sort(sortedRow, comparator);
+      resultPath.addAll(sortedRow);
+      y += MAX_COMPARE_DELTA;
+    }
+    return resultPath;
+  }
+  
+  public void getAllPaths(List<RPath> paths, RShape shape) {
+    for (int i = 0; i < shape.countChildren(); i++) {
+      RShape s = shape.children[i];
+      getAllPaths(paths, s);
+    }
+    for (int i = 0; i < shape.countPaths(); i++) {
+      paths.add(shape.paths[i]);
+    }
+  }
+  
   /**
    * Process keyboard input
    * 
@@ -726,6 +797,13 @@ public class Plotter extends PApplet {
       break;
     case 'r': 
       dx += DELTA_STEP; 
+      state = STATE_PLOTTING_SCREEN;
+      break;
+      
+    case 'w':
+      blackOnWhite = !blackOnWhite;
+      shapeStroke = (blackOnWhite) ? SHAPE_STROKE_BLACK : SHAPE_STROKE_WHITE;
+      canvasBackground = (blackOnWhite) ? CANVAS_BACKGROUND_WHITE : CANVAS_BACKGROUND_BLACK;
       state = STATE_PLOTTING_SCREEN;
       break;
 
@@ -864,6 +942,21 @@ public class Plotter extends PApplet {
    */
   public static void main(String args[]) {
     PApplet.main(new String[] { "com.tinkerlog.kritzler.Plotter" });
-  }    
+  }  
+  
+  private class PathComparator implements Comparator<RPath> {
+
+    @Override
+    public int compare(RPath path1, RPath path2) {
+      RPoint p1 = path1.getPoints()[0];
+      RPoint p2 = path2.getPoints()[0];
+      float dx = p1.x - p2.x;
+      float dy = p1.y - p2.y;
+      if (abs(dy) < MAX_COMPARE_DELTA) {
+        return p1.x > p2.x ? 1 : p1.x < p2.x ? -1 : 0;
+      }
+      return (dy > 0) ? 1 : -1;
+    }
+  }
   
 }
