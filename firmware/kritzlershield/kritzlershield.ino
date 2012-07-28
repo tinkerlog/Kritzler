@@ -135,7 +135,7 @@ typedef struct {
   long targetM2;
 } command;
 
-#define MAX_COMMANDS 5
+#define MAX_COMMANDS 10
 command cmdBuffer[MAX_COMMANDS];
 byte readPtr = 0;
 byte writePtr = 0;
@@ -143,6 +143,9 @@ byte writePtr = 0;
 
 void setup() {
 
+  while (!Serial) {
+    ;
+  }
   Serial.begin(57600);
   Serial.println("#start up");
 
@@ -239,7 +242,7 @@ ISR(TIMER2_OVF_vect) {
   byte cmd;
 
   preScaler++;
-  if (preScaler < 3) {
+  if (preScaler < 4) {
     return;
   }
   preScaler = 0;
